@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe RL Agent</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding-top: 50px;
+        }
+        h1 { color: #333; }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 5px;
+            background-color: #333;
+            padding: 5px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .cell {
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .cell:hover {
+            background-color: #f9f9f9;
+        }
+        .cell.x { color: #e74c3c; }
+        .cell.o { color: #3498db; }
+        
+        #status {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            height: 30px;
+        }
+        
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Tic-Tac-Toe vs RL Agent</h1>
+    
+    <div class="board" id="board">
+        <div class="cell" onclick="makeMove(0, 0)" id="cell-0-0"></div>
+        <div class="cell" onclick="makeMove(0, 1)" id="cell-0-1"></div>
+        <div class="cell" onclick="makeMove(0, 2)" id="cell-0-2"></div>
+        <div class="cell" onclick="makeMove(1, 0)" id="cell-1-0"></div>
+        <div class="cell" onclick="makeMove(1, 1)" id="cell-1-1"></div>
+        <div class="cell" onclick="makeMove(1, 2)" id="cell-1-2"></div>
+        <div class="cell" onclick="makeMove(2, 0)" id="cell-2-0"></div>
+        <div class="cell" onclick="makeMove(2, 1)" id="cell-2-1"></div>
+        <div class="cell" onclick="makeMove(2, 2)" id="cell-2-2"></div>
+    </div>
+
+    <div id="status">Game in progress...</div>
+    <button onclick="resetGame()">New Game</button>
+
+    <script>
+        let gameEnded = false;
+
+        async function resetGame() {
+            const response = await fetch('/api/reset', { method: 'POST' });
+            const data = await response.json();
+            updateBoard(data);
+        }
+
+        async function makeMove(row, col) {
+            if (gameEnded) return;
+            
+            // Optimistic update (optional, but let's wait for server for simplicity)
+            
+            const response = await fetch('/api/move', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ row, col })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                updateBoard(data);
+            } else {
+                console.error("Invalid move");
+            }
+        }
+
+        function updateBoard(data) {
+            const board = data.board;
+            gameEnded = data.ended;
+            
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    const cell = document.getElementById(`cell-${i}-${j}`);
+                    const val = board[i][j];
+                    cell.innerText = val === 1 ? 'X' : (val === -1 ? 'O' : '');
+                    cell.className = 'cell ' + (val === 1 ? 'x' : (val === -1 ? 'o' : ''));
+                }
+            }
+
+            const statusDiv = document.getElementById('status');
+            if (data.ended) {
+                if (data.winner === 1) {
+                    statusDiv.innerText = "Agent Wins! (You lost)";
+                    statusDiv.style.color = "#e74c3c";
+                } else if (data.winner === -1) {
+                    statusDiv.innerText = "You Win! (Impossible?)";
+                    statusDiv.style.color = "#3498db";
+                } else {
+                    statusDiv.innerText = "It's a Draw!";
+                    statusDiv.style.color = "#333";
+                }
+            } else {
+                statusDiv.innerText = "Your turn (O)";
+                statusDiv.style.color = "#333";
+            }
+        }
+
+        // Start game on load
+        resetGame();
+    </script>
+</body>
+</html>
