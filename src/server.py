@@ -55,7 +55,7 @@ class TicTacToeHandler(http.server.SimpleHTTPRequestHandler):
             env.make_move(action)
         
         self.send_json_response({
-            'board': env.board.tolist(),
+            'board': env.board,
             'ended': env.is_ended(),
             'winner': env.get_winner(),
             'agent_player': agent_player_id
@@ -100,7 +100,7 @@ class TicTacToeHandler(http.server.SimpleHTTPRequestHandler):
                 env.make_move(action)
 
         self.send_json_response({
-            'board': env.board.tolist(),
+            'board': env.board,
             'ended': env.is_ended(),
             'winner': env.get_winner(),
             'agent_player': agent_player_id
