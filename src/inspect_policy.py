@@ -1,7 +1,7 @@
 import pickle
-import numpy as np
 import sys
 import os
+import ast
 
 def inspect_policy(policy_path='policy.pkl', output_file='policy_values.txt'):
     if not os.path.exists(policy_path):
@@ -22,12 +22,13 @@ def inspect_policy(policy_path='policy.pkl', output_file='policy_values.txt'):
         
         for state_str, value in sorted_items:
             # Parse state string back to board
-            # state_str is like "[0 1 -1 ...]"
+            # state_str is like "[0, 1, -1, ...]"
             try:
-                # Remove brackets and convert to numpy array
-                clean_str = state_str.replace('[', '').replace(']', '')
-                board_flat = np.fromstring(clean_str, sep=' ', dtype=int)
-                board = board_flat.reshape(3, 3)
+                # Use ast.literal_eval to safely parse the list string
+                board_flat = ast.literal_eval(state_str)
+                
+                # Reshape to 3x3
+                board = [board_flat[i:i+3] for i in range(0, 9, 3)]
                 
                 f.write(f"Value: {value:.4f}\n")
                 
@@ -36,7 +37,7 @@ def inspect_policy(policy_path='policy.pkl', output_file='policy_values.txt'):
                 for i in range(3):
                     row_str = " "
                     for j in range(3):
-                        row_str += symbols[board[i, j]] + " "
+                        row_str += symbols[board[i][j]] + " "
                     f.write(row_str + "\n")
                 f.write("\n----------------------------------------\n")
             except Exception as e:

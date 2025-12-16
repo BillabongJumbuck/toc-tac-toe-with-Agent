@@ -1,5 +1,5 @@
-import numpy as np
 import os
+import random
 from tictactoe import TicTacToe
 from agent import TDAgent, RandomAgent
 
@@ -9,10 +9,14 @@ def get_agent_state_hash(env, player):
     If agent is Player 1 (1), returns standard hash.
     If agent is Player 2 (-1), returns hash of inverted board (so agent looks like 1).
     """
-    board = env.board.copy()
+    # env.board is list of lists
+    board = [row[:] for row in env.board]
+    
     if player == -1:
-        board = board * -1
-    return str(board.reshape(9))
+        board = [[cell * -1 for cell in row] for row in board]
+        
+    flat_board = [cell for row in board for cell in row]
+    return str(flat_board)
 
 def train(episodes=20000, save_path='policy.pkl'):
     env = TicTacToe()
@@ -27,7 +31,7 @@ def train(episodes=20000, save_path='policy.pkl'):
         # Randomize starting player
         # 1: Agent starts (Agent is Player 1)
         # -1: Opponent starts (Agent is Player 2)
-        agent_role = 1 if np.random.rand() < 0.5 else -1
+        agent_role = 1 if random.random() < 0.5 else -1
         
         # If Agent is Player 2, Opponent moves first
         if agent_role == -1:

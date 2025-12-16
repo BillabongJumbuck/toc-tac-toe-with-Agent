@@ -11,15 +11,11 @@
   - `server.py`: 简单的 HTTP 后端服务器
   - `index.html`: 浏览器对弈的前端页面
   - `inspect_policy.py`: 用于导出和查看学习到的价值函数的工具
-- `requirements.txt`: Python 依赖
 - `policy.pkl`: 训练后保存的策略文件
 
 ## 安装
 
-1. 安装依赖:
-   ```bash
-   pip install -r requirements.txt
-   ```
+无需安装任何外部依赖！本项目使用纯 Python 编写。
 
 ## 使用方法
 

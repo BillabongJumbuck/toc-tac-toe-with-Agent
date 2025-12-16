@@ -1,6 +1,6 @@
-import numpy as np
 import pickle
 import os
+import random
 
 class TDAgent:
     def __init__(self, alpha=0.1, epsilon=0.1, gamma=0.9):
@@ -19,8 +19,6 @@ class TDAgent:
     def update_value(self, state, reward, next_state=None):
         """
         TD(0) update: V(s) = V(s) + alpha * (reward + gamma * V(s') - V(s))
-        For Tic-Tac-Toe, rewards usually come at the end, so intermediate rewards are 0.
-        If next_state is None (terminal), V(s') is 0.
         """
         current_val = self.get_value(state)
         
@@ -37,43 +35,45 @@ class TDAgent:
             return None
 
         # Epsilon-greedy
-        if is_training and np.random.rand() < self.epsilon:
-            idx = np.random.choice(len(available_moves))
-            return available_moves[idx]
+        if is_training and random.random() < self.epsilon:
+            return random.choice(available_moves)
 
         # Greedy action based on V(s')
         best_value = -float('inf')
         best_move = available_moves[0]
 
         # We need to peek at the next state for each action to decide
-        # Since we can't easily "peek" without modifying the env, we might need a helper
-        # or we simulate the move.
-        # A simple way is to simulate the board state string.
+        # env.board is a list of lists [[...], [...], [...]]
         
-        # Let's parse the state string back to board or use the env to simulate if possible.
-        # Since env.board is mutable, we should be careful. 
-        # Better approach: The agent knows it's player 1.
-        
-        current_board = env.board.copy()
+        # Deep copy the board manually
+        current_board = [row[:] for row in env.board]
         
         for move in available_moves:
+            r, c = move
             # Simulate move
-            temp_board = current_board.copy()
-            temp_board[move] = player # Place the piece for the current player
+            # Create a temporary board for this move
+            temp_board = [row[:] for row in current_board]
+            temp_board[r][c] = player # Place the piece for the current player
             
             # If we are playing as -1 (Player 2), we need to invert the board 
             # to match the perspective the agent was trained on (Agent is 1).
             if player == -1:
-                check_board = temp_board * -1
+                check_board = [[cell * -1 for cell in row] for row in temp_board]
             else:
                 check_board = temp_board
-                
-            next_state_hash = str(check_board.reshape(9))
+            
+            # Flatten and stringify to match tictactoe.py get_state()
+            flat_board = [cell for row in check_board for cell in row]
+            next_state_hash = str(flat_board)
             
             val = self.get_value(next_state_hash)
             if val > best_value:
                 best_value = val
                 best_move = move
+            elif val == best_value:
+                # Randomly break ties to avoid deterministic loops in self-play
+                if random.random() < 0.5:
+                    best_move = move
                 
         return best_move
 
@@ -95,5 +95,4 @@ class RandomAgent:
         available_moves = env.get_available_moves()
         if not available_moves:
             return None
-        idx = np.random.choice(len(available_moves))
-        return available_moves[idx]
+        return random.choice(available_moves)

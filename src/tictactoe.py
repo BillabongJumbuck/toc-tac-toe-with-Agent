@@ -1,44 +1,49 @@
-import numpy as np
-
 class TicTacToe:
     def __init__(self):
-        self.board = np.zeros((3, 3), dtype=int)
+        self.board = [[0, 0, 0] for _ in range(3)]
         self.winner = None
         self.ended = False
         self.num_players = 2
         self.current_player = 1  # 1 starts
 
     def reset(self):
-        self.board = np.zeros((3, 3), dtype=int)
+        self.board = [[0, 0, 0] for _ in range(3)]
         self.winner = None
         self.ended = False
         self.current_player = 1
         return self.get_state()
 
     def get_state(self):
-        # Return a hashable representation of the state (tuple of tuples)
-        # 0: empty, 1: player 1 (Agent), -1: player 2 (Opponent)
-        return str(self.board.reshape(9))
+        # Return a hashable representation of the state
+        # Flatten the board
+        flat_board = [cell for row in self.board for cell in row]
+        return str(flat_board)
 
     def get_available_moves(self):
         if self.ended:
             return []
-        return list(zip(*np.where(self.board == 0)))
+        moves = []
+        for r in range(3):
+            for c in range(3):
+                if self.board[r][c] == 0:
+                    moves.append((r, c))
+        return moves
 
     def make_move(self, position):
         if self.ended:
             return False
         
-        if self.board[position] != 0:
+        r, c = position
+        if self.board[r][c] != 0:
             return False
 
-        self.board[position] = self.current_player
+        self.board[r][c] = self.current_player
         
         # Check for winner
         if self.check_winner(self.current_player):
             self.winner = self.current_player
             self.ended = True
-        elif np.all(self.board != 0):
+        elif self.is_full():
             self.winner = 0  # Draw
             self.ended = True
         else:
@@ -46,12 +51,26 @@ class TicTacToe:
         
         return True
 
+    def is_full(self):
+        for row in self.board:
+            for cell in row:
+                if cell == 0:
+                    return False
+        return True
+
     def check_winner(self, player):
-        # Check rows, cols, diagonals
+        # Check rows
         for i in range(3):
-            if np.all(self.board[i, :] == player) or np.all(self.board[:, i] == player):
+            if all(self.board[i][j] == player for j in range(3)):
                 return True
-        if np.diag(self.board).sum() == player * 3 or np.diag(np.fliplr(self.board)).sum() == player * 3:
+        # Check cols
+        for j in range(3):
+            if all(self.board[i][j] == player for i in range(3)):
+                return True
+        # Check diagonals
+        if all(self.board[i][i] == player for i in range(3)):
+            return True
+        if all(self.board[i][2-i] == player for i in range(3)):
             return True
         return False
 
@@ -67,6 +86,6 @@ class TicTacToe:
         for i in range(3):
             row = "| "
             for j in range(3):
-                row += symbols[self.board[i, j]] + " | "
+                row += symbols[self.board[i][j]] + " | "
             print(row)
             print("-------------")
