@@ -10,6 +10,7 @@
   - `main.py`: 训练脚本及命令行对弈
   - `server.py`: 简单的 HTTP 后端服务器
   - `index.html`: 浏览器对弈的前端页面
+  - `inspect_policy.py`: 用于导出和查看学习到的价值函数的工具
 - `requirements.txt`: Python 依赖
 - `policy.pkl`: 训练后保存的策略文件
 
@@ -52,6 +53,15 @@ python src/server.py
 ```
 
 然后在浏览器中访问：[http://localhost:8000](http://localhost:8000)。你可以在页面上选择是你先手 (X) 还是智能体先手 (X)。
+
+### 4. 查看学习到的策略
+
+你可以将学习到的状态价值导出到文本文件中，以查看智能体对不同棋盘状态的评估。
+
+```bash
+python src/inspect_policy.py
+```
+这将生成一个 `policy_values.txt` 文件，其中包含按价值排序的所有状态。
 
 ## 算法细节
 

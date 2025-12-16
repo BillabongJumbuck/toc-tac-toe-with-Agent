@@ -12,6 +12,7 @@ This project implements a Tic-Tac-Toe agent using Tabular Reinforcement Learning
   - `main.py`: Script to train the agent and play via CLI.
   - `server.py`: Simple HTTP server for the web interface.
   - `index.html`: Frontend for playing against the agent in a browser.
+  - `inspect_policy.py`: Tool to export and inspect the learned value function.
 - `requirements.txt`: Python dependencies.
 - `policy.pkl`: Saved trained policy (generated after training).
 
@@ -54,6 +55,15 @@ python src/server.py
 ```
 
 Then open your browser and visit: [http://localhost:8000](http://localhost:8000). You can choose whether you want to start first (X) or let the Agent start (X).
+
+### 4. Inspect Learned Policy
+
+You can export the learned state values to a text file to see what the agent thinks of different board states.
+
+```bash
+python src/inspect_policy.py
+```
+This will generate a `policy_values.txt` file containing all states sorted by their value.
 
 ## Algorithm Details
 
