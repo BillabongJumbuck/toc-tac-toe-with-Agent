@@ -60,3 +60,7 @@ Then open your browser and visit: [http://localhost:8000](http://localhost:8000)
 - **State Representation**: The board state is hashed into a string to serve as the key in the value table.
 - **Update Rule**: $V(S_t) \leftarrow V(S_t) + \alpha [R_{t+1} + \gamma V(S_{t+1}) - V(S_t)]$
 - **Strategy**: $\epsilon$-greedy during training, Greedy during play.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

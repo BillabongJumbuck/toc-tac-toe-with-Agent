@@ -58,3 +58,7 @@ python src/server.py
 - **状态表示**: 棋盘状态被哈希成字符串，作为价值表中的键。
 - **更新规则**: $V(S_t) \leftarrow V(S_t) + \alpha [R_{t+1} + \gamma V(S_{t+1}) - V(S_t)]$
 - **策略**: 训练时使用 $\epsilon$-贪婪策略，对弈时使用贪婪策略。
+
+## 许可证
+
+本项目采用 MIT 许可证 - 详情请参阅 [LICENSE](LICENSE) 文件。
