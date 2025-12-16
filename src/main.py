@@ -3,6 +3,17 @@ import os
 from tictactoe import TicTacToe
 from agent import TDAgent, RandomAgent
 
+def get_agent_state_hash(env, player):
+    """
+    Returns the state hash from the agent's perspective.
+    If agent is Player 1 (1), returns standard hash.
+    If agent is Player 2 (-1), returns hash of inverted board (so agent looks like 1).
+    """
+    board = env.board.copy()
+    if player == -1:
+        board = board * -1
+    return str(board.reshape(9))
+
 def train(episodes=20000, save_path='policy.pkl'):
     env = TicTacToe()
     agent = TDAgent(epsilon=0.1) 
@@ -13,21 +24,32 @@ def train(episodes=20000, save_path='policy.pkl'):
     for e in range(episodes):
         env.reset()
         
+        # Randomize starting player
+        # 1: Agent starts (Agent is Player 1)
+        # -1: Opponent starts (Agent is Player 2)
+        agent_role = 1 if np.random.rand() < 0.5 else -1
+        
+        # If Agent is Player 2, Opponent moves first
+        if agent_role == -1:
+            opp_action = opponent.choose_action(env)
+            env.make_move(opp_action)
+        
         # We need to store the 'afterstate' of the agent's last move to update it later
         last_agent_afterstate = None
         
         while not env.is_ended():
             # --- Agent's Turn ---
             # Agent chooses action based on the value of the resulting afterstates
-            current_state_hash = env.get_state() # This is S_t (before move)
-            action = agent.choose_action(env, current_state_hash)
+            # Note: choose_action internally handles the perspective flipping if we pass the correct player
+            action = agent.choose_action(env, None, player=agent_role)
             
             if action is None: break
             
             # Create the afterstate for this action
-            # We can just make the move and get the state, but we need to be careful about game ending
             env.make_move(action)
-            current_agent_afterstate = env.get_state() # This is S'_t (after move)
+            
+            # Get the state hash from Agent's perspective (Self=1)
+            current_agent_afterstate = get_agent_state_hash(env, agent_role)
             
             # If we had a previous move, update its value based on this new afterstate value
             if last_agent_afterstate is not None:
@@ -38,10 +60,10 @@ def train(episodes=20000, save_path='policy.pkl'):
             # Check if Agent won immediately
             if env.is_ended():
                 reward = 0
-                if env.winner == 1:
+                if env.winner == agent_role:
                     reward = 1
                 elif env.winner == 0: # Draw
-                    reward = 0.5 # Draw is better than losing
+                    reward = 0.5 
                 else:
                     reward = 0
                 
@@ -56,7 +78,7 @@ def train(episodes=20000, save_path='policy.pkl'):
             # Check if Opponent won
             if env.is_ended():
                 reward = 0
-                if env.winner == 1:
+                if env.winner == agent_role:
                     reward = 1
                 elif env.winner == 0: # Draw
                     reward = 0.5
@@ -120,5 +142,12 @@ if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1 and sys.argv[1] == 'play':
         play()
+    elif len(sys.argv) > 1:
+        try:
+            episodes = int(sys.argv[1])
+            train(episodes=episodes)
+        except ValueError:
+            print(f"Invalid argument '{sys.argv[1]}'. Training with default episodes.")
+            train()
     else:
         train()

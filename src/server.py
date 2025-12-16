@@ -9,6 +9,7 @@ from agent import TDAgent
 env = TicTacToe()
 agent = TDAgent(epsilon=0)
 POLICY_PATH = 'policy.pkl'
+agent_player_id = 1 # Default agent is Player 1 (X)
 
 # Load policy if exists
 if os.path.exists(POLICY_PATH):
@@ -31,19 +32,33 @@ class TicTacToeHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error(404)
 
     def handle_reset(self):
+        global agent_player_id
+        content_length = int(self.headers['Content-Length'])
+        if content_length > 0:
+            post_data = self.rfile.read(content_length)
+            data = json.loads(post_data)
+            user_starts = data.get('user_starts', False)
+        else:
+            user_starts = False # Default: Agent starts (Agent is Player 1)
+
         env.reset()
-        # Agent moves first if it's Player 1
-        # In main.py we had Agent as Player 1.
-        # Let's keep consistency. Agent moves immediately after reset.
         
-        # Agent move
-        action = agent.choose_action(env, env.get_state(), is_training=False)
-        env.make_move(action)
+        if user_starts:
+            # User is Player 1 (X), Agent is Player 2 (O)
+            agent_player_id = -1
+            # Wait for user move
+        else:
+            # Agent is Player 1 (X), User is Player 2 (O)
+            agent_player_id = 1
+            # Agent moves immediately
+            action = agent.choose_action(env, env.get_state(), is_training=False, player=agent_player_id)
+            env.make_move(action)
         
         self.send_json_response({
             'board': env.board.tolist(),
             'ended': env.is_ended(),
-            'winner': env.get_winner()
+            'winner': env.get_winner(),
+            'agent_player': agent_player_id
         })
 
     def handle_move(self):
@@ -58,7 +73,19 @@ class TicTacToeHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error(400, "Missing row or col")
             return
 
-        # Human move (Player 2)
+        # Human move
+        # Human is always the "current player" when it's their turn in the UI flow
+        # But we need to ensure it's actually their turn.
+        # env.current_player tracks whose turn it is (1 or -1).
+        # If agent_player_id is 1, Human is -1.
+        # If agent_player_id is -1, Human is 1.
+        
+        human_player_id = -1 * agent_player_id
+        
+        if env.current_player != human_player_id:
+             self.send_json_response({'error': 'Not your turn'}, status=400)
+             return
+
         success = env.make_move((row, col))
         
         if not success:
@@ -67,15 +94,16 @@ class TicTacToeHandler(http.server.SimpleHTTPRequestHandler):
 
         # Check if game ended after human move
         if not env.is_ended():
-            # Agent move (Player 1)
-            action = agent.choose_action(env, env.get_state(), is_training=False)
+            # Agent move
+            action = agent.choose_action(env, env.get_state(), is_training=False, player=agent_player_id)
             if action:
                 env.make_move(action)
 
         self.send_json_response({
             'board': env.board.tolist(),
             'ended': env.is_ended(),
-            'winner': env.get_winner()
+            'winner': env.get_winner(),
+            'agent_player': agent_player_id
         })
 
     def send_json_response(self, data, status=200):

@@ -24,10 +24,14 @@
 
 ### 1. 训练智能体
 
-运行训练脚本，让智能体与随机机器人对弈 20,000 局。
+运行训练脚本，让智能体与随机机器人对弈。智能体会同时学习先手（Player 1）和后手（Player 2）的策略。默认为 20,000 局。
 
 ```bash
+# 使用默认的 20,000 局进行训练
 python src/main.py
+
+# 自定义训练轮次 (例如 50,000 局)
+python src/main.py 50000
 ```
 这将生成一个 `policy.pkl` 文件。
 
@@ -47,7 +51,7 @@ python src/main.py play
 python src/server.py
 ```
 
-然后在浏览器中访问：[http://localhost:8000](http://localhost:8000)
+然后在浏览器中访问：[http://localhost:8000](http://localhost:8000)。你可以在页面上选择是你先手 (X) 还是智能体先手 (X)。
 
 ## 算法细节
 

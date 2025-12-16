@@ -81,13 +81,29 @@
     </div>
 
     <div id="status">Game in progress...</div>
+    
+    <div style="margin-top: 15px;">
+        <label>
+            <input type="radio" name="startPlayer" value="agent" checked> Agent Starts (X)
+        </label>
+        <label style="margin-left: 15px;">
+            <input type="radio" name="startPlayer" value="user"> I Start (X)
+        </label>
+    </div>
+
     <button onclick="resetGame()">New Game</button>
 
     <script>
         let gameEnded = false;
 
         async function resetGame() {
-            const response = await fetch('/api/reset', { method: 'POST' });
+            const userStarts = document.querySelector('input[name="startPlayer"]:checked').value === 'user';
+            
+            const response = await fetch('/api/reset', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_starts: userStarts })
+            });
             const data = await response.json();
             updateBoard(data);
         }
@@ -114,11 +130,14 @@
         function updateBoard(data) {
             const board = data.board;
             gameEnded = data.ended;
+            const agentPlayer = data.agent_player || 1; // Default to 1 if not sent
             
             for (let i = 0; i < 3; i++) {
                 for (let j = 0; j < 3; j++) {
                     const cell = document.getElementById(`cell-${i}-${j}`);
                     const val = board[i][j];
+                    
+                    // Display X for 1, O for -1
                     cell.innerText = val === 1 ? 'X' : (val === -1 ? 'O' : '');
                     cell.className = 'cell ' + (val === 1 ? 'x' : (val === -1 ? 'o' : ''));
                 }
@@ -126,10 +145,10 @@
 
             const statusDiv = document.getElementById('status');
             if (data.ended) {
-                if (data.winner === 1) {
+                if (data.winner === agentPlayer) {
                     statusDiv.innerText = "Agent Wins! (You lost)";
                     statusDiv.style.color = "#e74c3c";
-                } else if (data.winner === -1) {
+                } else if (data.winner === -1 * agentPlayer) {
                     statusDiv.innerText = "You Win! (Impossible?)";
                     statusDiv.style.color = "#3498db";
                 } else {
@@ -137,7 +156,11 @@
                     statusDiv.style.color = "#333";
                 }
             } else {
-                statusDiv.innerText = "Your turn (O)";
+                // Whose turn?
+                // If agentPlayer is 1, then 1 is Agent, -1 is User.
+                // If agentPlayer is -1, then -1 is Agent, 1 is User.
+                // We don't get current_player from server explicitly here, but we know it's user's turn if not ended and we just got response
+                statusDiv.innerText = "Your turn";
                 statusDiv.style.color = "#333";
             }
         }

@@ -31,7 +31,7 @@ class TDAgent:
             
         self.V[state] = current_val + self.alpha * (target - current_val)
 
-    def choose_action(self, env, state, is_training=True):
+    def choose_action(self, env, state, is_training=True, player=1):
         available_moves = env.get_available_moves()
         if not available_moves:
             return None
@@ -59,8 +59,16 @@ class TDAgent:
         for move in available_moves:
             # Simulate move
             temp_board = current_board.copy()
-            temp_board[move] = 1 # Agent is always 1 in its own view for value estimation
-            next_state_hash = str(temp_board.reshape(9))
+            temp_board[move] = player # Place the piece for the current player
+            
+            # If we are playing as -1 (Player 2), we need to invert the board 
+            # to match the perspective the agent was trained on (Agent is 1).
+            if player == -1:
+                check_board = temp_board * -1
+            else:
+                check_board = temp_board
+                
+            next_state_hash = str(check_board.reshape(9))
             
             val = self.get_value(next_state_hash)
             if val > best_value:
